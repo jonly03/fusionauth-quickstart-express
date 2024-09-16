@@ -1,0 +1,114 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>FusionAuth Express Web</title>
+    <link rel="stylesheet" href="/static/css/changebank.css" />
+  </head>
+  <body>
+    <div id="page-container">
+      <div id="page-header">
+        <div id="logo-header">
+          <img
+            src="https://fusionauth.io/cdn/samplethemes/changebank/changebank.svg"
+          />
+          <div class="h-row">
+            <p class="header-email"></p>
+            <a class="button-lg" href="/logout">Logout</a>
+          </div>
+        </div>
+
+        <div id="menu-bar" class="menu-bar">
+          <a class="menu-link" href="/add-data">Add Data</a>
+          <a class="menu-link inactive" href="/make-change">Make Change</a>
+          <a class="menu-link inactive" href="/account">Account</a>
+        </div>
+      </div>
+
+      <div style="flex: 1">
+        <div class="column-container">
+          <div class="app-container change-container">
+            <h3>Add custom user data</h3>
+            <div class="error-message"></div>
+
+            <form onsubmit="addData(event)" id="add-data-form">
+              <div class="h-row">
+                <div class="change-label">Nickname:</div>
+                <input
+                  class="change-input"
+                  name="nickname"
+                  id="nickname"
+                  type="text"
+                  placeholder="What's your nickname"
+                />
+              </div>
+              <div class="h-row">
+                <div class="change-label">Hobby:</div>
+                <input
+                  class="change-input"
+                  name="hobby"
+                  id="hobby"
+                  type="text"
+                  placeholder="What's your hobby"
+                />
+              </div>
+              <input class="change-submit" type="submit" value="Add Data" />
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        function updateData(userData) {
+          // TODO: Make it more dynamic. Create fields for available data
+          if (Object.keys(userData).length) {
+            userData?.hobby
+              ? (document.getElementById("hobby").value = userData.hobby)
+              : (document.getElementById("hobby").value = "");
+            userData?.nickName
+              ? (document.getElementById("nickname").value = userData.nickName)
+              : (document.getElementById("nickname").value = "");
+          }
+        }
+
+        // Snag cookie user data
+        const user = JSON.parse(
+          decodeURIComponent(
+            document.cookie
+              .split("; ")
+              .filter((c) => c.includes("userDetails"))
+              .at(0)
+              .split("=")
+              .at(-1)
+          ).replace("j:", "")
+        );
+        document.querySelector(".header-email").innerHTML = user.email;
+
+        // update UI with user data
+        updateData(user.data);
+
+        const addData = async (e) => {
+          e.preventDefault();
+
+          const resp = await (
+            await fetch("/add-data", {
+              method: "POST",
+              body: new URLSearchParams(new FormData(e.currentTarget)),
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+            })
+          ).json();
+          const result = JSON.parse(resp);
+
+          if (result.error) {
+            document.querySelector(".error-message").innerHTML = result.error;
+          } else {
+            document.querySelector(".error-message").innerHTML = "";
+
+            updateData(result.message.response.user.data);
+          }
+        };
+      </script>
+    </div>
+  </body>
+</html>
